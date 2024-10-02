@@ -15,11 +15,8 @@ app.use(cors({
     credentials: true, // Allow credentials to be sent in requests
 }));
 
-// Connect to MongoDB with secure options (no deprecated flags)
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
+// Connect to MongoDB without deprecated flags
+mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log('Connected to MongoDB successfully'))
 .catch(err => {
     console.error('Failed to connect to MongoDB:', err.message);
