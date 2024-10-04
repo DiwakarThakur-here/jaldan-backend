@@ -77,6 +77,7 @@ exports.submitForm = async (req, res) => {
       - First Name: ${req.body.firstName}
       - Last Name: ${req.body.lastName}
       - Email: ${req.body.email}
+      - Phone Number: ${req.body.phoneNumber}
       - Distribution Point: ${req.body.distributionPoint}
       - Shipping Address: ${req.body.shippingAddress}
       - Foot Traffic: ${req.body.footTraffic}
@@ -89,6 +90,7 @@ exports.submitForm = async (req, res) => {
       - First Name: ${req.body.firstName}
       - Last Name: ${req.body.lastName}
       - Email: ${req.body.email}
+      - Phone Number: ${req.body.phoneNumber}
       - Subject: ${req.body.subject}
       - Message: ${req.body.message}`;
     }
@@ -107,8 +109,8 @@ exports.submitForm = async (req, res) => {
     // Only send the response after the email has been successfully sent
     res.status(201).json({ message: 'Form submitted and email sent successfully!' });
   } catch (error) {
-    // If any error occurs (either in validation or email sending), handle it here
-    console.error(error);
+    // Handle error while sending email or submitting the form
+    console.error('Error during form submission or email sending:', error);
     res.status(500).json({ message: 'Failed to submit form or send email', error });
   }
 };

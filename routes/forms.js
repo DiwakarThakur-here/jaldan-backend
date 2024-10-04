@@ -8,11 +8,31 @@ router.post(
   '/',
   // Add validation rules here
   [
-    // These are basic validation rules; adjust them based on your form fields
+    // General validation
     check('firstName').not().isEmpty().withMessage('First name is required'),
     check('lastName').not().isEmpty().withMessage('Last name is required'),
     check('email').isEmail().withMessage('Valid email is required'),
-    // Add additional checks for other fields if necessary
+    check('formType').not().isEmpty().withMessage('Form type is required'),
+    check('formType').custom(value => {
+      const validTypes = ['advertise', 'distribute', 'contact'];
+      if (!validTypes.includes(value)) {
+        throw new Error('Invalid form type');
+      }
+      return true;
+    }),
+
+    // Advertise-specific fields validation
+    check('companyName').if(check('formType').equals('advertise')).not().isEmpty().withMessage('Company name is required for advertise form'),
+    check('typeOfBusiness').if(check('formType').equals('advertise')).not().isEmpty().withMessage('Type of business is required for advertise form'),
+    check('budget').if(check('formType').equals('advertise')).not().isEmpty().withMessage('Budget is required for advertise form'),
+
+    // Distribute-specific fields validation
+    check('distributionPoint').if(check('formType').equals('distribute')).not().isEmpty().withMessage('Distribution Point is required for distribute form'),
+    check('beveragesPerMonth').if(check('formType').equals('distribute')).not().isEmpty().withMessage('Beverages per Month is required for distribute form'),
+
+    // Contact-specific fields validation
+    check('subject').if(check('formType').equals('contact')).not().isEmpty().withMessage('Subject is required for contact form'),
+    check('message').if(check('formType').equals('contact')).not().isEmpty().withMessage('Message is required for contact form'),
   ],
   async (req, res) => {
     // Check validation result
