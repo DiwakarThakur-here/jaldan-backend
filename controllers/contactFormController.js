@@ -1,10 +1,31 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require('nodemailer'); 
 const UnifiedForm = require('../models/unifiedForm');
+const axios = require('axios'); // Added for Google reCAPTCHA verification
 
 // Unified form submission function
 exports.submitForm = async (req, res) => {
   try {
-    const formType = req.body.formType;
+    const { formType, captchaValue } = req.body;
+
+    // Verify Google reCAPTCHA
+    if (!captchaValue) {
+      return res.status(400).json({ message: 'Captcha value is required.' });
+    }
+
+    const verifyCaptchaResponse = await axios.post(
+      `https://www.google.com/recaptcha/api/siteverify`,
+      null,
+      {
+        params: {
+          secret: process.env.RECAPTCHA_SECRET_KEY,
+          response: captchaValue,
+        },
+      }
+    );
+
+    if (!verifyCaptchaResponse.data.success) {
+      return res.status(400).json({ message: 'Captcha verification failed.' });
+    }
 
     // Prepare the form data to save in the database
     const formData = {
@@ -27,7 +48,7 @@ exports.submitForm = async (req, res) => {
       subject: req.body.subject,
       message: req.body.message,
       isForEvent: req.body.isForEvent || false,
-      agreeToShare: req.body.agreeToShare || false
+      agreeToShare: req.body.agreeToShare || false,
     };
 
     // Validation for advertise form
@@ -100,7 +121,7 @@ exports.submitForm = async (req, res) => {
       from: process.env.EMAIL_USER,
       to: req.body.email, // Send confirmation to the user
       subject: `Form Submission Confirmation - ${formType}`,
-      text: emailBody
+      text: emailBody,
     };
 
     // Send the email

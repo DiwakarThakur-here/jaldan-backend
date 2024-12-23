@@ -33,6 +33,9 @@ router.post(
     // Contact-specific fields validation
     check('subject').if(check('formType').equals('contact')).not().isEmpty().withMessage('Subject is required for contact form'),
     check('message').if(check('formType').equals('contact')).not().isEmpty().withMessage('Message is required for contact form'),
+
+    // ReCAPTCHA token validation
+    check('captchaValue').not().isEmpty().withMessage('Captcha value is required'),
   ],
   async (req, res) => {
     // Check validation result
