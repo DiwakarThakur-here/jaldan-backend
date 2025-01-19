@@ -1,6 +1,6 @@
-const nodemailer = require('nodemailer'); 
+const nodemailer = require('nodemailer');
 const UnifiedForm = require('../models/unifiedForm');
-const axios = require('axios'); // Added for Google reCAPTCHA verification
+const axios = require('axios');
 
 // Unified form submission function
 exports.submitForm = async (req, res) => {
@@ -10,6 +10,11 @@ exports.submitForm = async (req, res) => {
     // Verify Google reCAPTCHA
     if (!captchaValue) {
       return res.status(400).json({ message: 'Captcha value is required.' });
+    }
+
+    if (!process.env.RECAPTCHA_SECRET_KEY) {
+      console.error('RECAPTCHA_SECRET_KEY is not set in the environment variables.');
+      return res.status(500).json({ message: 'Server configuration error. Please contact the administrator.' });
     }
 
     const verifyCaptchaResponse = await axios.post(
@@ -23,13 +28,19 @@ exports.submitForm = async (req, res) => {
       }
     );
 
+    console.log('Captcha verification response:', verifyCaptchaResponse.data); // Debugging
+
     if (!verifyCaptchaResponse.data.success) {
-      return res.status(400).json({ message: 'Captcha verification failed.' });
+      console.error('Captcha verification failed:', verifyCaptchaResponse.data['error-codes']);
+      return res.status(400).json({
+        message: 'Captcha verification failed.',
+        error: verifyCaptchaResponse.data['error-codes'] || 'Unknown error',
+      });
     }
 
     // Prepare the form data to save in the database
     const formData = {
-      formType: formType,
+      formType,
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       email: req.body.email,
@@ -80,7 +91,11 @@ exports.submitForm = async (req, res) => {
     });
 
     // Configure email details with form data
-    let emailBody = `Thank you ${req.body.firstName} ${req.body.lastName}, your ${formType} form has been submitted successfully!\n\nHere are the details you submitted:\n`;
+    const emailBody = `
+    Thank you ${req.body.firstName} ${req.body.lastName}, your ${formType} form has been submitted successfully!
+    Here are the details you submitted:
+    ${JSON.stringify(formData, null, 2)}
+  `;
 
     // Include submitted form data in the email body based on form type
     if (formType === 'advertise') {
@@ -131,7 +146,7 @@ exports.submitForm = async (req, res) => {
     res.status(201).json({ message: 'Form submitted and email sent successfully!' });
   } catch (error) {
     // Handle error while sending email or submitting the form
-    console.error('Error during form submission or email sending:', error);
-    res.status(500).json({ message: 'Failed to submit form or send email', error });
+    console.error('Error during form submission or email sending:', error.message);
+    res.status(500).json({ message: 'Failed to submit form or send email', error: error.message });
   }
 };
